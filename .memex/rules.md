@@ -1,7 +1,7 @@
 # Running Streamlit
 When running streamlit always use with flag `--server.headless=true` to avoid requiring interactive input from user
 
-# Datasources
+# Data Sources
 
 ## Google Sheets
 
