@@ -87,34 +87,37 @@ import subprocess
 from pathlib import Path
 import modal
 
-# Container setup with dependencies
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "streamlit~=1.35.0",
-    # Add your app's dependencies here
+# Define file paths
+streamlit_script_local_path = Path(__file__).parent / "app.py"
+streamlit_script_remote_path = "/root/app.py"
+
+if not streamlit_script_local_path.exists():
+    raise RuntimeError(
+        "app.py not found! Place the script with your streamlit app in the same directory."
+    )
+
+# Container setup with dependencies and local files
+image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .uv_pip_install(
+        "streamlit~=1.35.0",
+        # Add your app's dependencies here
+    )
+    .add_local_file(
+        streamlit_script_local_path,
+        streamlit_script_remote_path,
+    )
 )
 
 app = modal.App(name="streamlit-dashboard", image=image)
 
-# Mount app.py
-streamlit_script_local_path = Path(__file__).parent / "app.py"
-streamlit_script_remote_path = Path("/root/app.py")
-
-streamlit_script_mount = modal.Mount.from_local_file(
-    streamlit_script_local_path,
-    streamlit_script_remote_path,
-)
-
-@app.function(
-    allow_concurrent_inputs=100,
-    mounts=[streamlit_script_mount],
-)
+@app.function()
+@modal.concurrent(max_inputs=100)
 @modal.web_server(8000)
 def run():
-    cmd = f"streamlit run {streamlit_script_remote_path} --server.port 8000 --server.enableCORS=false --server.enableXsrfProtection=false"
-    subprocess.Popen(shlex.split(cmd))
-
-if __name__ == "__main__":
-    app.serve()
+    target = shlex.quote(streamlit_script_remote_path)
+    cmd = f"streamlit run {target} --server.port 8000 --server.enableCORS=false --server.enableXsrfProtection=false --server.headless=true"
+    subprocess.Popen(cmd, shell=True)
 ```
 
 ## Deploy
