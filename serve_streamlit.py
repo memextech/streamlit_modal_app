@@ -16,9 +16,9 @@ if not streamlit_script_local_path.exists():
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .uv_pip_install(
-        "streamlit~=1.35.0",
-        "numpy~=1.26.4",
-        "pandas~=2.2.2"
+        "streamlit~=1.52.0",
+        "numpy~=2.3.5",
+        "pandas~=2.3.3"
     )
     .add_local_file(
         streamlit_script_local_path,
